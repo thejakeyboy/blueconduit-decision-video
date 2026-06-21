@@ -1,4 +1,6 @@
 node_modules/
 out/
+screen_recordings/
+analysis/
 .DS_Store
 *.local
