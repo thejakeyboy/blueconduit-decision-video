@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  AbsoluteFill,
-  Img,
-  interpolate,
-  spring,
-  staticFile,
-  useCurrentFrame,
-} from 'remotion';
+import {AbsoluteFill, Img, OffthreadVideo, Sequence, interpolate, spring, staticFile, useCurrentFrame} from 'remotion';
 
 // ── Real BlueConduit brand palette (extracted from official logo) ───────────
 const navyBg = '#071829';       // video background dark
@@ -61,26 +54,29 @@ const Background: React.FC = () => {
 };
 
 // ── Real BlueConduit logo (SVG, transparent bg, works on dark) ────────────
-const BCLogo: React.FC<{compact?: boolean}> = ({compact}) => {
-  const r = compact ? 20 : 28;
-  const fontSize = compact ? 22 : 30;
-  const gap = compact ? 10 : 14;
+const BCLogo: React.FC<{compact?: boolean; small?: boolean}> = ({compact, small}) => {
+  const r = small ? 17 : (compact ? 20 : 28);
+  const fontSize = small ? 19 : (compact ? 22 : 30);
+  const gap = small ? 9 : (compact ? 10 : 14);
+  const clipId = small ? 'bc-logo-clip-small' : (compact ? 'bc-logo-clip-compact' : 'bc-logo-clip-large');
   return (
-    <div style={{display:'flex', alignItems:'center', gap}}>
-      {/* Circle mark — matches real logo wave layers */}
+    <div style={{display: 'flex', alignItems: 'center', gap}}>
       <svg width={r * 2} height={r * 2} viewBox="0 0 60 60">
-        <circle cx="30" cy="30" r="28" fill={navy} stroke={navy} strokeWidth="3"/>
-        {/* sand wave */}
-        <path d="M2 28 Q15 18 30 24 Q45 30 58 22 L58 2 L2 2 Z" fill={brandSand} opacity="0.9"/>
-        {/* dark water wave */}
-        <path d="M2 34 Q15 26 30 31 Q45 36 58 28 L58 50 Q45 44 30 38 Q15 32 2 40 Z" fill={brandBlue}/>
-        {/* light water wave */}
-        <path d="M2 42 Q15 36 30 40 Q45 44 58 38 L58 58 L2 58 Z" fill={brandLightBlue} opacity="0.85"/>
-        <circle cx="30" cy="30" r="27.5" fill="none" stroke={navy} strokeWidth="3"/>
+        <defs>
+          <clipPath id={clipId}>
+            <circle cx="30" cy="30" r="26.5" />
+          </clipPath>
+        </defs>
+        <circle cx="30" cy="30" r="27.5" fill="white" stroke={navy} strokeWidth="3" />
+        <g clipPath={`url(#${clipId})`}>
+          <path d="M0 28 Q15 18 30 24 Q45 30 60 22 L60 0 L0 0 Z" fill={brandSand} opacity="0.9" />
+          <path d="M0 34 Q15 26 30 31 Q45 36 60 28 L60 50 Q45 44 30 38 Q15 32 0 40 Z" fill={brandBlue} />
+          <path d="M0 42 Q15 36 30 40 Q45 44 60 38 L60 60 L0 60 Z" fill={brandLightBlue} opacity="0.85" />
+        </g>
+        <circle cx="30" cy="30" r="27.5" fill="none" stroke={navy} strokeWidth="3" />
       </svg>
-      <div style={{display:'flex', alignItems:'baseline', gap:0}}>
-        <span style={{fontWeight:700, fontSize, color:brandLightBlue, letterSpacing:-0.5}}>Blue</span>
-        <span style={{fontWeight:700, fontSize, color:white, letterSpacing:-0.5}}>Conduit</span>
+      <div style={{fontWeight: 700, fontSize, letterSpacing: -0.5}}>
+        <span style={{color: brandLightBlue}}>Blue</span><span style={{color: white}}>Conduit</span>
       </div>
     </div>
   );
@@ -107,22 +103,33 @@ const Chrome: React.FC<{url?: string; children: React.ReactNode}> = ({url, child
 );
 
 // ── Screenshot with slow Ken Burns zoom ──────────────────────────────────
-const Shot: React.FC<{src: string; localFrame: number; h?: number; dx?: number; dy?: number; toScale?: number}> = (
-  {src, localFrame: f, h = 440, dx = 0, dy = 0, toScale = 1.07}
+const Shot: React.FC<{src: string; localFrame: number; h?: number; dx?: number; dy?: number; toScale?: number; isVideo?: boolean; objectPosition?: string}> = (
+  {src, localFrame: f, h = 440, dx = 0, dy = 0, toScale = 1.07, isVideo = false, objectPosition = 'top center'}
 ) => {
-  const scale = interpolate(f, [0, 250], [1.00, toScale], clamp);
-  const x = interpolate(f, [0, 250], [0, dx], clamp);
-  const y = interpolate(f, [0, 250], [0, dy], clamp);
+  const scale = interpolate(f, [0, 300], [1.00, toScale], clamp);
+  const x = interpolate(f, [0, 300], [0, dx], clamp);
+  const y = interpolate(f, [0, 300], [0, dy], clamp);
+  const assetPath = isVideo ? `assets/live-clips/${src}` : src;
   return (
     <div style={{height:h, overflow:'hidden', background:'#EDF4FA'}}>
-      <Img
-        src={staticFile(src)}
-        style={{
-          width:'100%', height:'100%', objectFit:'cover', objectPosition:'top center',
-          transform:`translate(${x}px,${y}px) scale(${scale})`,
-          transformOrigin:'top center',
-        }}
-      />
+      <div style={{
+        width:'100%', height:'100%',
+        transform:`translate(${x}px,${y}px) scale(${scale})`,
+        transformOrigin:'top center',
+      }}>
+        {isVideo ? (
+          <OffthreadVideo
+            src={staticFile(assetPath)}
+            muted
+            style={{width:'100%', height:'100%', objectFit:'cover', objectPosition}}
+          />
+        ) : (
+          <Img
+            src={staticFile(assetPath)}
+            style={{width:'100%', height:'100%', objectFit:'cover', objectPosition}}
+          />
+        )}
+      </div>
     </div>
   );
 };
@@ -229,8 +236,9 @@ const SceneHook: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const SceneCompliance: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 170;
-  const op = fadeScene(frame, 170, 420);
+  const start = 170;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 470);
   const ph1S = appear(f, 22);
   const ph2S = appear(f, 38);
 
@@ -239,12 +247,12 @@ const SceneCompliance: React.FC = () => {
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28}}>
         <div>
           <BCLogo compact />
-          <div style={{marginTop:18, fontSize:52, fontWeight:950, letterSpacing:-2.5, color:white, lineHeight:1.0}}>
+          <div style={{marginTop:18, fontSize:52, fontWeight:750, letterSpacing:-2.5, color:white, lineHeight:1.0}}>
             From compliance to<br/>smart decision making.
           </div>
           <div style={{fontSize:22, color:muted, marginTop:14, lineHeight:1.45}}>
             LCRI · Nov 2027 requires your inventory and replacement plan.<br/>
-            <span style={{color:brandSand, fontWeight:800}}>That's the start — not the end.</span>
+            <span style={{color:brandSand, fontWeight:750}}>That's the start — not the end.</span>
           </div>
         </div>
         <div style={{
@@ -253,21 +261,24 @@ const SceneCompliance: React.FC = () => {
           transform:`scale(${appear(f, 8)})`,
         }}>
           <div style={{fontSize:12, color:muted, letterSpacing:2.5, textTransform:'uppercase'}}>Deadline</div>
-          <div style={{fontSize:38, fontWeight:950, color:brandSand, lineHeight:1}}>Nov 2027</div>
+          <div style={{fontSize:38, fontWeight:750, color:brandSand, lineHeight:1}}>Nov 2027</div>
           <div style={{fontSize:13, color:muted, marginTop:4}}>LCRR / LCRI</div>
         </div>
       </div>
 
-      {/* Two placeholder image boxes */}
       <div style={{display:'flex', gap:22}}>
         <div style={{flex:1, transform:`scale(${ph1S})`, transformOrigin:'left top'}}>
           <Chrome url="app.blueconduit.com · SL Hub">
-            <PlaceholderShot label="Screenshot / Video — Service Line Inventory" h={308} />
+            <Sequence from={start + 10} durationInFrames={300} layout="none">
+              <Shot src="v2_01_inventory_compliance_0013_0024.mp4" isVideo localFrame={f} h={308} objectPosition="center 18%" />
+            </Sequence>
           </Chrome>
         </div>
         <div style={{flex:1, transform:`scale(${ph2S})`, transformOrigin:'right top'}}>
           <Chrome url="app.blueconduit.com · Compliance Manager">
-            <PlaceholderShot label="Screenshot / Video — Compliance Report" h={308} />
+            <Sequence from={start + 20} durationInFrames={300} layout="none">
+              <Shot src="v3_compliance_report_0303_0312.mp4" isVideo localFrame={f} h={308} objectPosition="center 10%" />
+            </Sequence>
           </Chrome>
         </div>
       </div>
@@ -350,8 +361,9 @@ const SceneEngine: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const ScenePredict: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 550;
-  const op = fadeScene(frame, 550, 810);
+  const start = 550;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 810);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.80, 0.81]);
 
   const bullets = [
@@ -380,7 +392,9 @@ const ScenePredict: React.FC = () => {
       <div style={{display:'flex', gap:26, alignItems:'flex-start'}}>
         <div style={{flex:1, transform:`scale(${screenS})`, transformOrigin:'left top'}}>
           <Chrome url="app.blueconduit.com · Predictions">
-            <Shot src="assets/predictions-loaded.png" localFrame={f} dx={-6} dy={-8} h={418} />
+            <Sequence from={start + 15} durationInFrames={300} layout="none">
+              <Shot src="v3_02_prediction_risk_map_0141_0159.mp4" isVideo localFrame={f} dx={-6} dy={-8} h={418} objectPosition="center 15%" />
+            </Sequence>
           </Chrome>
         </div>
 
@@ -407,8 +421,9 @@ const ScenePredict: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const SceneExplain: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 790;
-  const op = fadeScene(frame, 790, 1000);
+  const start = 790;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 1000);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.80, 0.81]);
 
   const factors = [
@@ -437,7 +452,9 @@ const SceneExplain: React.FC = () => {
       <div style={{display:'flex', gap:26, alignItems:'flex-start'}}>
         <div style={{flex:1, transform:`scale(${screenS})`, transformOrigin:'left top'}}>
           <Chrome url="app.blueconduit.com · Mains Hub — Risk & Predictions">
-            <Shot src="assets/cof-map-view.png" localFrame={f} dy={-12} h={418} />
+            <Sequence from={start + 15} durationInFrames={300} layout="none">
+              <Shot src="v2_03_water_main_explain_0348_0355.mp4" isVideo localFrame={f} dy={-12} h={418} objectPosition="center 12%" />
+            </Sequence>
           </Chrome>
         </div>
         <div style={{display:'grid', gap:13, width:290}}>
@@ -472,8 +489,9 @@ const SceneExplain: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const ScenePlan: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 980;
-  const op = fadeScene(frame, 980, 1210);
+  const start = 980;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 1210);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.82, 0.83]);
 
   const stats = [
@@ -502,7 +520,9 @@ const ScenePlan: React.FC = () => {
       <div style={{display:'flex', gap:26, alignItems:'flex-start'}}>
         <div style={{flex:1, transform:`scale(${screenS})`, transformOrigin:'left top'}}>
           <Chrome url="app.blueconduit.com · Planner — Workspace">
-            <Shot src="assets/plan-heatmap.png" localFrame={f} dx={-8} dy={-6} h={418} />
+            <Sequence from={start + 15} durationInFrames={300} layout="none">
+              <Shot src="05_planner_selected_areas_1127_1148.mp4" isVideo localFrame={f} dx={-8} dy={-6} h={418} objectPosition="center 18%" />
+            </Sequence>
           </Chrome>
         </div>
         <div style={{display:'grid', gap:14, width:260}}>
@@ -618,10 +638,63 @@ const SceneDecisionMenu: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 // SCENE 8 — CLOSE (frames 1430–1650, 7.3 s)
 // ══════════════════════════════════════════════════════════════════════════
+const SceneUpdate: React.FC = () => {
+  const frame = useCurrentFrame();
+  const start = 1190;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 1410);
+  const screenS = interpolate(appear(f, 16), [0, 1], [0.80, 0.81]);
+
+  const items = [
+    {t:'Field verification', sub:'Survey data loops back to models', color:orange, delay:22},
+    {t:'Continuous learning', sub:'Map updates as assets are resolved', color:brandLightBlue, delay:35},
+  ];
+
+  return (
+    <AbsoluteFill style={{opacity:op, padding:'60px 70px'}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20}}>
+        <div>
+          <BCLogo compact />
+          <div style={{marginTop:16}}><Pill label="Update" color={orange} /></div>
+          <div style={{marginTop:14, fontSize:50, fontWeight:750, letterSpacing:-2.5, color:white, lineHeight:1.0}}>
+            Infrastructure data stays alive.
+          </div>
+          <div style={{fontSize:21, color:muted, marginTop:12, lineHeight:1.45}}>
+            Field outcomes shouldn't just sit in a folder.<br/>
+            Sync findings back to the engine to improve next year's scores.
+          </div>
+        </div>
+      </div>
+      <div style={{display:'flex', gap:26, alignItems:'flex-start'}}>
+        <div style={{flex:1, transform:`scale(${screenS})`, transformOrigin:'left top'}}>
+          <Chrome url="app.blueconduit.com · SL Hub — Edit Record">
+            <Sequence from={start + 15} durationInFrames={400} layout="none">
+              <Shot src="v3_update_operational_0240.mp4" isVideo localFrame={f} h={418} objectPosition="center 20%" />
+            </Sequence>
+          </Chrome>
+        </div>
+        <div style={{display:'grid', gap:16, width:290}}>
+          {items.map(({t, sub, color, delay}) => (
+            <div key={t} style={{
+              opacity:interpolate(f,[delay, delay+20],[0,1],clamp),
+              background:'rgba(255,255,255,.08)', border:`1px solid ${color}44`,
+              borderRadius:22, padding:'18px 20px',
+            }}>
+              <div style={{fontSize:22, fontWeight:750, color}}>{t}</div>
+              <div style={{fontSize:14, color:muted, marginTop:5, lineHeight:1.4}}>{sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 const SceneClose: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 1430;
-  const op = fadeScene(frame, 1430, 1650);
+  const start = 1590;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 1850);
   const titleY = interpolate(f, [0, 50], [36, 0], clamp);
   const titleOp = interpolate(f, [0, 40], [0, 1], clamp);
 
@@ -685,6 +758,7 @@ export const DecisionEngineDemo2026: React.FC = () => (
     <ScenePredict />
     <SceneExplain />
     <ScenePlan />
+    <SceneUpdate />
     <SceneDecisionMenu />
     <SceneClose />
   </AbsoluteFill>
