@@ -167,7 +167,7 @@ const Pill: React.FC<{label: string; color: string}> = ({label, color}) => (
 // ══════════════════════════════════════════════════════════════════════════
 const SceneHook: React.FC = () => {
   const frame = useCurrentFrame();
-  const op = fadeScene(frame, 0, 180);
+  const op = fadeScene(frame, 0, 240);
   const titleY = interpolate(frame, [0, 50], [40, 0], clamp);
   const titleOp = interpolate(frame, [0, 38], [0, 1], clamp);
   const subOp = interpolate(frame, [42, 72], [0, 1], clamp);
@@ -236,9 +236,9 @@ const SceneHook: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const SceneCompliance: React.FC = () => {
   const frame = useCurrentFrame();
-  const start = 170;
+  const start = 210;
   const f = frame - start;
-  const op = fadeScene(frame, start, 470);
+  const op = fadeScene(frame, start, 560);
   const ph1S = appear(f, 22);
   const ph2S = appear(f, 38);
 
@@ -298,8 +298,9 @@ const ENGINE = [
 
 const SceneEngine: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 400;
-  const op = fadeScene(frame, 400, 570);
+  const start = 530;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 760);
 
   return (
     <AbsoluteFill style={{opacity:op}}>
@@ -361,9 +362,9 @@ const SceneEngine: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const ScenePredict: React.FC = () => {
   const frame = useCurrentFrame();
-  const start = 550;
+  const start = 730;
   const f = frame - start;
-  const op = fadeScene(frame, start, 810);
+  const op = fadeScene(frame, start, 1060);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.80, 0.81]);
 
   const bullets = [
@@ -421,9 +422,9 @@ const ScenePredict: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const SceneExplain: React.FC = () => {
   const frame = useCurrentFrame();
-  const start = 790;
+  const start = 1030;
   const f = frame - start;
-  const op = fadeScene(frame, start, 1000);
+  const op = fadeScene(frame, start, 1360);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.80, 0.81]);
 
   const factors = [
@@ -489,9 +490,9 @@ const SceneExplain: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const ScenePlan: React.FC = () => {
   const frame = useCurrentFrame();
-  const start = 980;
+  const start = 1330;
   const f = frame - start;
-  const op = fadeScene(frame, start, 1210);
+  const op = fadeScene(frame, start, 1660);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.82, 0.83]);
 
   const stats = [
@@ -575,8 +576,9 @@ const MenuItem: React.FC<{n: string; title: string; desc: string; color: string;
 
 const SceneDecisionMenu: React.FC = () => {
   const frame = useCurrentFrame();
-  const f = frame - 1190;
-  const op = fadeScene(frame, 1190, 1450);
+  const start = 1930;
+  const f = frame - start;
+  const op = fadeScene(frame, start, 2260);
 
   return (
     <AbsoluteFill style={{opacity:op, padding:'46px 62px'}}>
@@ -640,9 +642,9 @@ const SceneDecisionMenu: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════
 const SceneUpdate: React.FC = () => {
   const frame = useCurrentFrame();
-  const start = 1190;
+  const start = 1630;
   const f = frame - start;
-  const op = fadeScene(frame, start, 1410);
+  const op = fadeScene(frame, start, 1960);
   const screenS = interpolate(appear(f, 16), [0, 1], [0.80, 0.81]);
 
   const items = [
@@ -692,9 +694,9 @@ const SceneUpdate: React.FC = () => {
 
 const SceneClose: React.FC = () => {
   const frame = useCurrentFrame();
-  const start = 1590;
+  const start = 2230;
   const f = frame - start;
-  const op = fadeScene(frame, start, 1850);
+  const op = fadeScene(frame, start, 2550);
   const titleY = interpolate(f, [0, 50], [36, 0], clamp);
   const titleOp = interpolate(f, [0, 40], [0, 1], clamp);
 
